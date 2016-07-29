@@ -73,7 +73,17 @@ def svm_loss_vectorized(W, X, y, reg):
   # Implement a vectorized version of the structured SVM loss, storing the    #
   # result in loss.                                                           #
   #############################################################################
-  pass
+  scores = X.dot(W)
+  margins = scores - scores[np.arange(X.shape[0]), y][:, None] + 1
+  # print margins.shape
+  
+  idx = margins <= 0 # indices of negative margins --> should be set to zero due to max(0, ...)
+  margins[idx] = 0 
+
+  margins[np.arange(X.shape[0]), y] = 0 # --> those ones 
+  idx2 = (margins > 0).astype('float32')
+  loss = margins.sum(axis=1).mean()
+  loss += 0.5 * reg * np.sum(W * W)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -88,7 +98,14 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
-  pass
+  #dW += X.sum(axis=0)[:, None]
+  idx2[range(X.shape[0]), y] = -idx2.sum(axis=1)
+  dW = X.T.dot(idx2)
+
+
+  #dW[idx] = 0
+  dW /= X.shape[0]
+  dW += reg*W
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
