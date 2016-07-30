@@ -91,7 +91,35 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  num_train = X.shape[0]
+  num_classes = W.shape[1]
+
+  scores = X.dot(W)
+  scores += -np.max(scores) # trick to keep numerical stability  
+
+  lossTraining = 0.0
+
+  # calculate e^f / Sum_c(e^f_c)    , where c is all classes
+  sumOfExps = np.sum(np.exp(scores), axis=1).reshape(num_train, 1)
+  normExpScores = np.exp(scores) / sumOfExps
+
+  # loss for i^th sample is -log(e^f_yi / Sum_c(e^f_c))
+  # so we just need the correct index of normExpScores 
+  lossTraining = np.sum(-np.log(normExpScores[range(num_train), y]))
+
+  # start with e^f / Sum_c(e^f_c)
+  dscore = normExpScores
+  # mark correct classes with ds-1 instead of ds
+  dscore[range(num_train), y] -= 1
+  # so that when we multiply, we'll also subtract X from those
+  dW = dscore.T.dot(X)
+    
+  lossTraining /= scores.shape[0]
+  lossRegularization = 0.5*reg*np.sum(W*W)
+
+  dW = dW.T /num_train + reg * W
+
+  loss = lossTraining + lossRegularization
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
