@@ -74,9 +74,11 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
+    
     scores_layer1 = X.dot(W1) + b1 # first layer
     scores_layer1 = np.maximum(scores_layer1, 0) # ReLU
     scores = scores_layer1.dot(W2) + b2 # second layer
+    
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -87,6 +89,7 @@ class TwoLayerNet(object):
 
     # Compute the loss
     loss = None
+    
     #############################################################################
     # TODO: Finish the forward pass, and compute the loss. This should include  #
     # both the data loss and L2 regularization for W1 and W2. Store the result  #
@@ -94,7 +97,21 @@ class TwoLayerNet(object):
     # classifier loss. So that your results match ours, multiply the            #
     # regularization loss by 0.5                                                #
     #############################################################################
-    pass
+    
+    # trick to keep numerical stability  
+    scores += -np.max(scores) 
+    # calculate e^f / Sum_c(e^f_c)    , where c is all classes
+    sumOfExps = np.sum(np.exp(scores), axis=1).reshape(N, 1)
+    normExpScores = np.exp(scores) / sumOfExps
+    # loss for i^th sample is -log(e^f_yi / Sum_c(e^f_c))
+    # so we just need the correct index of normExpScores 
+    lossTraining = np.sum(-np.log(normExpScores[range(N), y]))
+    # divide the loss to number of scores
+    lossTraining /= scores.shape[0]
+    # calculate regularization loss for W1 and W2
+    lossRegularization = 0.5*(reg*np.sum(W1*W1) + reg*np.sum(W2*W2))
+    loss = lossTraining + lossRegularization
+    
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
