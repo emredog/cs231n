@@ -70,11 +70,13 @@ class TwoLayerNet(object):
     # Compute the forward pass
     scores = None
     #############################################################################
-    # TODO: Perform the forward pass, computing the class scores for the input. #
+    # Perform the forward pass, computing the class scores for the input. #
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+    scores_layer1 = X.dot(W1) + b1 # first layer
+    scores_layer1 = np.maximum(scores_layer1, 0) # ReLU
+    scores = scores_layer1.dot(W2) + b2 # second layer
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
