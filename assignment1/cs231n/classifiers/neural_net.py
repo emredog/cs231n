@@ -70,14 +70,16 @@ class TwoLayerNet(object):
     # Compute the forward pass
     scores = None
     #############################################################################
-    # Perform the forward pass, computing the class scores for the input. #
+    # Perform the forward pass, computing the class scores for the input.       #
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
     
-    scores_layer1 = X.dot(W1) + b1 # first layer
-    scores_layer1 = np.maximum(scores_layer1, 0) # ReLU
-    scores = scores_layer1.dot(W2) + b2 # second layer
+    s1 = X.dot(W1) + b1 # first layer
+    s1_relu = np.maximum(s1, 0) # ReLU
+    s2 = s1_relu.dot(W2) + b2 # second layer
+
+    scores = s2
     
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -91,7 +93,7 @@ class TwoLayerNet(object):
     loss = None
     
     #############################################################################
-    # TODO: Finish the forward pass, and compute the loss. This should include  #
+    # Finish the forward pass, and compute the loss. This should include        #
     # both the data loss and L2 regularization for W1 and W2. Store the result  #
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss. So that your results match ours, multiply the            #
@@ -100,16 +102,18 @@ class TwoLayerNet(object):
     
     # trick to keep numerical stability  
     scores += -np.max(scores) 
-    # calculate e^f / Sum_c(e^f_c)    , where c is all classes
-    sumOfExps = np.sum(np.exp(scores), axis=1).reshape(N, 1)
-    normExpScores = np.exp(scores) / sumOfExps
-    # loss for i^th sample is -log(e^f_yi / Sum_c(e^f_c))
+    # calculate e^(f_xj) / Sum_j(e^(f_xj))    , where c is all classes
+    sumOfExps = np.sum(np.exp(scores), axis=1).reshape(N, 1) # sumOfExps is a scalar
+    expScores = np.exp(scores) # vector containing e^(f_xj)
+    normExpScores =  expScores / sumOfExps # vector containing e^(f_xj)/sumOfExps
+
+    # loss for i^th sample is -log(e^(f_yi) / Sum_j(e^(f_xj))
     # so we just need the correct index of normExpScores 
-    lossTraining = np.sum(-np.log(normExpScores[range(N), y]))
-    # divide the loss to number of scores
-    lossTraining /= scores.shape[0]
+    minusLogOfNormExpScores = -np.log(normExpScores[range(N), y]) # this vector contains -log(e^(f_xj)/sumOfExps) for each sample j
+    # loss training is simply the mean of the L_i
+    lossTraining = np.sum(minusLogOfNormExpScores) / N
     # calculate regularization loss for W1 and W2
-    lossRegularization = 0.5*(reg*np.sum(W1*W1) + reg*np.sum(W2*W2))
+    lossRegularization = 0.5*( reg*np.sum(W1*W1) + reg*np.sum(W2*W2) )
     loss = lossTraining + lossRegularization
     
     #############################################################################
@@ -123,7 +127,20 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    mask = np.zeros_like(expScores)
+    mask[range(N),y] = -1 # a sparse mat with ground truth is marked with -1
+    dLi_df = (np.copy(expScores) - mask) / sumOfExps # each row is for a sample. it contains dL_i / df (size=(5,3), same as scores)
+
+    # calculate dLi/dW1 = (df/dW1)*(dL1/df)
+    dfdW1 = X.T.dot(dLi_df.dot(W2.T)) # for all positive s1 ??
+    # dfdb1 = 
+
+
+    # grads['W2'] = 0    
+    # grads['b2'] = 0
+    grads['W1'] = dfdW1 #/N + reg*W1
+
+    # grads['b1'] = 0
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
