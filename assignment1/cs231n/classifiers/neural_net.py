@@ -123,24 +123,32 @@ class TwoLayerNet(object):
     # Backward pass: compute gradients
     grads = {}
     #############################################################################
-    # TODO: Compute the backward pass, computing the derivatives of the weights #
+    # Compute the backward pass, computing the derivatives of the weights       #
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
     mask = np.zeros_like(expScores)
     mask[range(N),y] = -1 # a sparse mat with ground truth is marked with -1
-    dLi_df = (np.copy(expScores) - mask) / sumOfExps # each row is for a sample. it contains dL_i / df (size=(5,3), same as scores)
+    dLi_df = (np.copy(expScores) / sumOfExps) + mask # each row is for a sample. it contains dL_i / df (size=(5,3), same as scores)
 
     # calculate dLi/dW1 = (df/dW1)*(dL1/df)
-    dfdW1 = X.T.dot(dLi_df.dot(W2.T)) # for all positive s1 ??
-    # dfdb1 = 
+    dLi_dfdotW2 = dLi_df.dot(W2.T)
+    dLi_dfdotW2[s1<=0] = 0
+    dLidW1 = X.T.dot(dLi_dfdotW2) # for all positive s1 ??
+    
+    # calculate dLi/db1 = (df/db1)*(dLi/df)
+    dLidb1 = dLi_dfdotW2.mean(0)
 
+    # calculate dLi/db2 = (df/db2)*(dLi/df)
+    dLidb2 = dLi_df.mean(0)
 
-    # grads['W2'] = 0    
-    # grads['b2'] = 0
-    grads['W1'] = dfdW1 #/N + reg*W1
+    # calcualte dLi/dW2 = (df/dW2)*(dLi/df)
+    dLidW2 = s1_relu.T.dot(dLi_df)
 
-    # grads['b1'] = 0
+    grads['W2'] = dLidW2 / N + reg*W2
+    grads['b2'] = dLidb2
+    grads['W1'] = dLidW1 /N + reg*W1
+    grads['b1'] = dLidb1
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -181,10 +189,12 @@ class TwoLayerNet(object):
       y_batch = None
 
       #########################################################################
-      # TODO: Create a random minibatch of training data and labels, storing  #
+      # Create a random minibatch of training data and labels, storing        #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      pass
+      bIdx = np.random.choice(num_train, batch_size) 
+      X_batch = X[bIdx,:]
+      y_batch = y[bIdx] 
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -199,7 +209,12 @@ class TwoLayerNet(object):
       # using stochastic gradient descent. You'll need to use the gradients   #
       # stored in the grads dictionary defined above.                         #
       #########################################################################
-      pass
+      W1, b1 = self.params['W1'], self.params['b1']
+      W2, b2 = self.params['W2'], self.params['b2']
+      self.params['W1'] = W1 - learning_rate*grads['W1']
+      self.params['W2'] = W2 - learning_rate*grads['W2']
+      self.params['b1'] = b1 - learning_rate*grads['b1']
+      self.params['b2'] = b2 - learning_rate*grads['b2']
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -210,8 +225,8 @@ class TwoLayerNet(object):
       # Every epoch, check train and val accuracy and decay learning rate.
       if it % iterations_per_epoch == 0:
         # Check accuracy
-        train_acc = (self.predict(X_batch) == y_batch).mean()
-        val_acc = (self.predict(X_val) == y_val).mean()
+        train_acc = np.array((self.predict(X_batch) == y_batch)).mean()
+        val_acc = np.array(self.predict(X_val) == y_val).mean()
         train_acc_history.append(train_acc)
         val_acc_history.append(val_acc)
 
@@ -244,7 +259,7 @@ class TwoLayerNet(object):
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    pass
+    y_pred = self.loss(X)
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
