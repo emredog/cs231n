@@ -259,7 +259,14 @@ class TwoLayerNet(object):
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    y_pred = self.loss(X)
+    scores = self.loss(X)
+    # trick to keep numerical stability  
+    scores += -np.max(scores) 
+    # calculate e^(f_xj) / Sum_j(e^(f_xj))    , where c is all classes
+    sumOfExps = np.sum(np.exp(scores), axis=1).reshape(X.shape[0], 1) # sumOfExps is a scalar
+    expScores = np.exp(scores) # vector containing e^(f_xj)
+    normExpScores =  expScores / sumOfExps # vector containing e^(f_xj)/sumOfExps
+    y_pred = normExpScores.argmax(1)
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
