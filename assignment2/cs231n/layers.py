@@ -88,12 +88,10 @@ def relu_forward(x):
   """
   out = None
   #############################################################################
-  # TODO: Implement the ReLU forward pass.                                    #
+  # Implement the ReLU forward pass.                                    #
   #############################################################################
-  print x
   z = np.zeros_like(x)
   out = np.maximum(x,z)
-  print out
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -114,9 +112,17 @@ def relu_backward(dout, cache):
   """
   dx, x = None, cache
   #############################################################################
-  # TODO: Implement the ReLU backward pass.                                   #
+  # Implement the ReLU backward pass.                                   #
   #############################################################################
-  pass
+  dx = np.zeros_like(dout)
+  
+  # find positive indices of cached input
+  posIdx = np.where(x>0)
+  # create a mask
+  dx[posIdx] = 1 
+  # "gate" the upstream gradient according to mask
+  dx = dx*dout
+  
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
