@@ -57,7 +57,18 @@ def affine_backward(dout, cache):
   #############################################################################
   # TODO: Implement the affine backward pass.                                 #
   #############################################################################
-  pass
+  N = x.shape[0]
+  dims = x.shape[1:]
+  D = np.prod(dims) # product of all elements of dims
+  # dx = dout * w
+  dx = dout.dot(w.T).reshape(x.shape) # (N,M) * (D,M)^T = (N,D) --> reshape to (N, d1,..,dk)
+  # dw = dout * x
+  xVect = x.reshape(N, D)
+  dw = xVect.T.dot(dout)  # (N, D)^T * (N,M) = (D,M)  
+
+  # db = dout * 1
+  db = np.sum(dout,0)
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
