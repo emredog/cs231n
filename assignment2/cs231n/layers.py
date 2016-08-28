@@ -26,16 +26,10 @@ def affine_forward(x, w, b):
   #############################################################################
   N = x.shape[0]
   dims = x.shape[1:]
-
   D = np.prod(dims) # product of all elements of dims
-
-  M = w.shape[1]
-
-  x = x.reshape(N, D)
-  
-  out = x.dot(w) + b
-
-
+  # M = w.shape[1]
+  xVect = x.reshape(N, D)  
+  out = xVect.dot(w) + b
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
