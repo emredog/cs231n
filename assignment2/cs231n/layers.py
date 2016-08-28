@@ -55,7 +55,7 @@ def affine_backward(dout, cache):
   x, w, b = cache
   dx, dw, db = None, None, None
   #############################################################################
-  # TODO: Implement the affine backward pass.                                 #
+  # Implement the affine backward pass.                                 #
   #############################################################################
   N = x.shape[0]
   dims = x.shape[1:]
@@ -90,7 +90,10 @@ def relu_forward(x):
   #############################################################################
   # TODO: Implement the ReLU forward pass.                                    #
   #############################################################################
-  pass
+  print x
+  z = np.zeros_like(x)
+  out = np.maximum(x,z)
+  print out
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
