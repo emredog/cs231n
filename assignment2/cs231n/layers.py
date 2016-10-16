@@ -12,7 +12,9 @@ def affine_forward(x, w, b):
 
   Inputs:
   - x: A numpy array containing input data, of shape (N, d_1, ..., d_k)
+  -     here N=1000, d_1 = 3, d_2 = 32, d_3 = 32
   - w: A numpy array of weights, of shape (D, M)
+  -     here D = 3x32x32, M is the # of nodes.
   - b: A numpy array of biases, of shape (M,)
   
   Returns a tuple of:
@@ -24,16 +26,17 @@ def affine_forward(x, w, b):
   # Implement the affine forward pass. Store the result in out. You     #
   # will need to reshape the input into rows.                                 #
   #############################################################################
-  N = x.shape[0]
-  dims = x.shape[1:]
+  N = x.shape[0] # number of inputs
+  dims = x.shape[1:] # all dimensions for each input (d_1,...,d_k)
   D = np.prod(dims) # product of all elements of dims
   # M = w.shape[1]
-  xVect = x.reshape(N, D)  
-  out = xVect.dot(w) + b
+  xVect = x.reshape(N, D)  # each input x is now a vector.
+  # f(x) = X.W + b
+  out = xVect.dot(w) + b   # matrix multiplication + bias
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
-  cache = (x, w, b)
+  cache = (x, w, b) # cache original input, current weights and bias
   return out, cache
 
 
@@ -46,27 +49,28 @@ def affine_backward(dout, cache):
   - cache: Tuple of:
     - x: Input data, of shape (N, d_1, ... d_k)
     - w: Weights, of shape (D, M)
+    - and also b: biases, of shape (M,)
 
   Returns a tuple of:
   - dx: Gradient with respect to x, of shape (N, d1, ..., d_k)
   - dw: Gradient with respect to w, of shape (D, M)
   - db: Gradient with respect to b, of shape (M,)
   """
-  x, w, b = cache
+  x, w, b = cache # retrieve original input, last used weigths and bias
   dx, dw, db = None, None, None
   #############################################################################
   # Implement the affine backward pass.                                 #
   #############################################################################
-  N = x.shape[0]
-  dims = x.shape[1:]
+  N = x.shape[0] # number of inputs
+  dims = x.shape[1:]  # all dimensions for each input (d_1,...,d_k)
   D = np.prod(dims) # product of all elements of dims
-  # dx = dout * w
+  # dx = dout * w   -->   because df/dx = w, and we multiply it by the gradient we received from upstream
   dx = dout.dot(w.T).reshape(x.shape) # (N,M) * (D,M)^T = (N,D) --> reshape to (N, d1,..,dk)
-  # dw = dout * x
-  xVect = x.reshape(N, D)
+  # dw = dout * x   -->   because df/dw = x, and we multiply it by the gradient we received from upstream
+  xVect = x.reshape(N, D) # transform original x into a vector, as we did on affine_forward function
   dw = xVect.T.dot(dout)  # (N, D)^T * (N,M) = (D,M)  
 
-  # db = dout * 1
+  # db = dout * 1   --> because df/db = 1, and we multiply it by the gradient we received from upstream
   db = np.sum(dout,0)
 
   #############################################################################
@@ -90,8 +94,8 @@ def relu_forward(x):
   #############################################################################
   # Implement the ReLU forward pass.                                    #
   #############################################################################
-  z = np.zeros_like(x)
-  out = np.maximum(x,z)
+  z = np.zeros_like(x)  # create a matrix of zeros, same size to x
+  out = np.maximum(x,z) # write 0 instead of negative numbers
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -121,7 +125,10 @@ def relu_backward(dout, cache):
   # create a mask
   dx[posIdx] = 1 
   # "gate" the upstream gradient according to mask
-  dx = dx*dout
+  dx = dx*dout 
+  # from course notes: "max gate distributes the gradient (unchanged) to exactly 
+  # one of its inputs (the input that had the highest value during the forward pass)."
+  # here we do this for every sample with positive (cached) input value.
   
   #############################################################################
   #                             END OF YOUR CODE                              #
