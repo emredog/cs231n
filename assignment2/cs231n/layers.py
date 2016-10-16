@@ -549,16 +549,23 @@ def svm_loss(x, y):
   - loss: Scalar giving the loss
   - dx: Gradient of the loss with respect to x
   """
-  N = x.shape[0]
-  correct_class_scores = x[np.arange(N), y]
-  margins = np.maximum(0, x - correct_class_scores[:, np.newaxis] + 1.0)
-  margins[np.arange(N), y] = 0
+
+  # s = [aaa, bbb, cccc, ... , xxx]
+  # L_i = sumForJisDifferentThanYi(max(0, s_j - s_yi + delta)), where yi is the score for correct label for ith sample 
+
+
+  N = x.shape[0] # number of samples
+  correct_class_scores = x[np.arange(N), y] # scores of correct classes
+  margins = np.maximum(0, x - correct_class_scores[:, np.newaxis] + 1.0) # differences from all (including the correct classes)
+  margins[np.arange(N), y] = 0 # set 0 for correct classes
   loss = np.sum(margins) / N
-  num_pos = np.sum(margins > 0, axis=1)
-  dx = np.zeros_like(x)
-  dx[margins > 0] = 1
-  dx[np.arange(N), y] -= num_pos
-  dx /= N
+
+  # gradient of max(0,x)
+  num_pos = np.sum(margins > 0, axis=1) # number of positive differences = number of "class scores that need adjustment"
+  dx = np.zeros_like(x) # set all to 0
+  dx[margins > 0] = 1 # mark for >zero inputs
+  dx[np.arange(N), y] -= num_pos # subtract "nb of class scores that need adjustment" from correct classes ?
+  dx /= N # normalize by the number of samples
   return loss, dx
 
 

@@ -38,14 +38,17 @@ class TwoLayerNet(object):
     self.reg = reg
     
     ############################################################################
-    # TODO: Initialize the weights and biases of the two-layer net. Weights    #
+    # Initialize the weights and biases of the two-layer net. Weights    #
     # should be initialized from a Gaussian with standard deviation equal to   #
     # weight_scale, and biases should be initialized to zero. All weights and  #
     # biases should be stored in the dictionary self.params, with first layer  #
     # weights and biases using the keys 'W1' and 'b1' and second layer weights #
     # and biases using the keys 'W2' and 'b2'.                                 #
     ############################################################################
-    pass
+    self.params['W1'] = np.random.normal(0, weight_scale, (input_dim, hidden_dim))
+    self.params['b1'] = np.zeros((hidden_dim,))
+    self.params['W2'] = np.random.normal(0, weight_scale, (hidden_dim, num_classes))
+    self.params['b2'] = np.zeros((num_classes,))
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
