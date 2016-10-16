@@ -75,10 +75,12 @@ class TwoLayerNet(object):
     """  
     scores = None
     ############################################################################
-    # TODO: Implement the forward pass for the two-layer net, computing the    #
+    # Implement the forward pass for the two-layer net, computing the          #
     # class scores for X and storing them in the scores variable.              #
     ############################################################################
-    pass
+    out1, cache1 = affine_relu_forward(X, self.params['W1'], self.params['b1'])   # 1st affine + ReLU
+    out2, cache2 = affine_forward(out1, self.params['W2'], self.params['b2'])     # 2nd affine
+    scores = np.maximum(0, out2)                                                  # softmax
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -98,7 +100,20 @@ class TwoLayerNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-    pass
+    loss, dout2 = softmax_loss(scores, y) # softmax loss
+
+    
+
+    dout1, dw2, db2 = affine_backward(dout2, cache2) # gradients & backward pass for 2nd affine    
+    grads['W2'] = dw2 + self.reg * self.params['W2'] 
+    grads['b2'] = db2
+
+    dX, dw1, db1 = affine_relu_backward(dout1, cache1) # gradients & backward pass for 1st affine + ReLU
+    grads['W1'] = dw1 + self.reg * self.params['W1'] 
+    grads['b1'] = db1
+
+    # loss + regularization
+    loss += 0.5*self.reg * (np.sum(self.params['W1']**2) + np.sum(self.params['W2']**2))
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
