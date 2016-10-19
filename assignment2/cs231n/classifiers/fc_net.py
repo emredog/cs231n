@@ -166,7 +166,7 @@ class FullyConnectedNet(object):
     self.params = {}
 
     ############################################################################
-    # TODO: Initialize the parameters of the network, storing all values in    #
+    # Initialize the parameters of the network, storing all values in    #
     # the self.params dictionary. Store weights and biases for the first layer #
     # in W1 and b1; for the second layer use W2 and b2, etc. Weights should be #
     # initialized from a normal distribution with standard deviation equal to  #
@@ -177,11 +177,13 @@ class FullyConnectedNet(object):
     # beta2, etc. Scale parameters should be initialized to one and shift      #
     # parameters should be initialized to zero.                                #
     ############################################################################
-    nbLayers = len(hidden_dims)
-    for l in xrange(1,nbLayers):
-
+    for l in xrange(1,self.num_layers):
       self.params['W' + str(l)] = np.random.normal(0, weight_scale, (input_dim, hidden_dim))
       self.params['b' + str(l)] = np.zeros((hidden_dim,))
+      if self.use_dropout:
+        pass # TODO
+      if self.use_batchnorm:
+        pass # TODO
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -239,7 +241,31 @@ class FullyConnectedNet(object):
     # self.bn_params[1] to the forward pass for the second batch normalization #
     # layer, etc.                                                              #
     ############################################################################
-    pass
+    cachesA = []
+    cachesR = []
+    prevOut = []
+
+    # reminder: {affine - [batch norm] - relu - [dropout]} x (L - 1) - affine - softmax
+    for l in xrange(1, self.num_layers-1)
+
+      if (l == 1):
+        inputData = X
+      else:
+        inputData = prevOut
+
+      outA, cacheA = affine_forward(X, self.params['W' + str(l)], self.params['b' + str(l)])  # affine
+      # TODO dropout
+      ourR, cacheR = relu_forward(outA)                                                       # ReLU
+      # TODO batchnorm
+      cachesA.append(cacheA)
+      cachesR.append(cacheR)
+      prevOut = outR
+
+    
+    outA, cacheA = affine_forward(prevOut, self.params['W' + str(self.num_layers)], self.params['b' + str(self.num_layers)])  # affine final       
+    scores = np.maximum(0, outA)                                                  # softmax
+
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
