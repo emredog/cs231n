@@ -102,8 +102,6 @@ class TwoLayerNet(object):
     ############################################################################
     loss, dout2 = softmax_loss(scores, y) # softmax loss
 
-    
-
     dout1, dw2, db2 = affine_backward(dout2, cache2) # gradients & backward pass for 2nd affine    
     grads['W2'] = dw2 + self.reg * self.params['W2'] 
     grads['b2'] = db2
@@ -179,7 +177,11 @@ class FullyConnectedNet(object):
     # beta2, etc. Scale parameters should be initialized to one and shift      #
     # parameters should be initialized to zero.                                #
     ############################################################################
-    pass
+    nbLayers = len(hidden_dims)
+    for l in xrange(1,nbLayers):
+
+      self.params['W' + str(l)] = np.random.normal(0, weight_scale, (input_dim, hidden_dim))
+      self.params['b' + str(l)] = np.zeros((hidden_dim,))
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
