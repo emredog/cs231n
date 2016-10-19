@@ -91,7 +91,7 @@ class TwoLayerNet(object):
     
     loss, grads = 0, {}
     ############################################################################
-    # TODO: Implement the backward pass for the two-layer net. Store the loss  #
+    # Implement the backward pass for the two-layer net. Store the loss  #
     # in the loss variable and gradients in the grads dictionary. Compute data #
     # loss using softmax, and make sure that grads[k] holds the gradients for  #
     # self.params[k]. Don't forget to add L2 regularization!                   #
