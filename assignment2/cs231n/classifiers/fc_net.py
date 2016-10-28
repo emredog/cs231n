@@ -298,7 +298,7 @@ class FullyConnectedNet(object):
 
     loss, grads = 0.0, {}
     ############################################################################
-    # TODO: Implement the backward pass for the fully-connected net. Store the #
+    # Implement the backward pass for the fully-connected net. Store the #
     # loss in the loss variable and gradients in the grads dictionary. Compute #
     # data loss using softmax, and make sure that grads[k] holds the gradients #
     # for self.params[k]. Don't forget to add L2 regularization!               #
@@ -310,16 +310,6 @@ class FullyConnectedNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-
-    # loss, dout2 = softmax_loss(scores, y) # softmax loss
-
-    # dout1, dw2, db2 = affine_backward(dout2, cache2) # gradients & backward pass for 2nd affine    
-    # grads['W2'] = dw2 + self.reg * self.params['W2'] 
-    # grads['b2'] = db2
-
-    # dX, dw1, db1 = affine_relu_backward(dout1, cache1) # gradients & backward pass for 1st affine + ReLU
-    # grads['W1'] = dw1 + self.reg * self.params['W1'] 
-    # grads['b1'] = db1
 
     # reminder: {affine - [batch norm] - relu - [dropout]} x (L - 1) - affine - softmax
     data_loss, dscores =  softmax_loss(scores, y) # softmax loss
