@@ -185,7 +185,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
   out, cache = None, None
   if mode == 'train':
     #############################################################################
-    # TODO: Implement the training-time forward pass for batch normalization.   #
+    # Implement the training-time forward pass for batch normalization.   #
     # Use minibatch statistics to compute the mean and variance, use these      #
     # statistics to normalize the incoming data, and scale and shift the        #
     # normalized data using gamma and beta.                                     #
@@ -197,18 +197,43 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     # the momentum variable to update the running mean and running variance,    #
     # storing your result in the running_mean and running_var variables.        #
     #############################################################################
-    pass
+    minibatch_mean = x.mean(axis = 0)
+    minibatch_var = x.std(axis = 0)**2 # variance = std^2
+
+    running_mean = momentum * running_mean + (1 - momentum) * minibatch_mean
+    running_var = momentum * running_var + (1 - momentum) * minibatch_var
+
+    # WE COULD DO IT LIKE THIS, 
+    # x_normalized = (x - minibatch_mean) / np.sqrt(minibatch_var - eps)
+    # out = gamma*x_normalized + beta
+
+    # BUT LET'S DO IT STEP BY STEP TO EASE THE BACKPROP
+    step1 = minibatch_mean # mean of x
+    step2 = x - step1 # shift x by mean
+    step3 = step2**2 
+    step4 = np.sum(step3, axis=0) / float(N) # variance
+    step5 = np.sqrt(step4 + eps)
+    step6 = 1.0 / step5
+    step7 = step2 * step6 # normalized x 
+    step8 = gamma * step7
+    out = step8 + beta # gamma*x_norm + beta, BN_gamma,beta(X) in the Szegedy paper        
+
+
+    # pack vars into cache
+    cache = (step1, step2, step3, step4, step5, step6, step7, step8, gamma, beta, x, bn_param)
+
     #############################################################################
     #                             END OF YOUR CODE                              #
     #############################################################################
   elif mode == 'test':
     #############################################################################
-    # TODO: Implement the test-time forward pass for batch normalization. Use   #
+    # Implement the test-time forward pass for batch normalization. Use   #
     # the running mean and variance to normalize the incoming data, then scale  #
     # and shift the normalized data using gamma and beta. Store the result in   #
     # the out variable.                                                         #
     #############################################################################
-    pass
+    x_normalized = (x - running_mean) / np.sqrt(running_var - eps)
+    out = gamma*x_normalized + beta
     #############################################################################
     #                             END OF YOUR CODE                              #
     #############################################################################
@@ -241,15 +266,50 @@ def batchnorm_backward(dout, cache):
   """
   dx, dgamma, dbeta = None, None, None
   #############################################################################
-  # TODO: Implement the backward pass for batch normalization. Store the      #
+  # Implement the backward pass for batch normalization. Store the      #
   # results in the dx, dgamma, and dbeta variables.                           #
   #############################################################################
-  pass
+  N, D = dout.shape
+
+  # unpack intermediates vars from cache
+  step1, step2, step3, step4, step5, step6, step7, step8, gamma, beta, x, bn_param = cache
+  # print 'step1 ', step1
+  # print 'step2 ', step2
+  # print 'step3 ', step3
+  # print 'step4 ', step4
+  # print 'step5 ', step5
+  # print 'step6 ', step6
+  # print 'step7 ', step7
+  # print 'step8 ', step8
+
+  eps = bn_param.get('eps', 1e-5)
+  
+  # following the chain rule, going 1 step back at a time:
+  dstep8 = dout 
+  dbeta = np.sum(dout, axis=0)  
+  
+  dgamma = np.sum(dstep8 * step7, axis=0) 
+  dstep7 = gamma*dstep8 
+
+  dstep6 = np.sum(step2 * dstep7, axis=0) 
+  dstep2_part1 = step6*dstep7 
+  dstep5 = -1.0 / (step5**2) * dstep6 # derivative of inverse times the upstream 
+  dstep4 = 0.5 * (step4+eps)**(-0.5) * dstep5 # derivative of sqrt times the upstream
+  dstep3 = 1.0 / float(N) * np.ones(step3.shape)*dstep4 # derivative of mean times the upstream
+  dstep2_part2 = 2.0 * step2 * dstep3 # derivative of ()^2 times the upstream
+  dstep2 = dstep2_part1 + dstep2_part2 
+  dstep1 = -1.0 * np.sum(dstep2, axis=0) # -1 times upstream 
+  dx_part1 = dstep2 # from the first branch (addition)
+  dx_part2 = 1.0 / float(N) * np.ones(dstep2.shape) * dstep1 #  derivative of mean times upstream
+  dx = dx_part1 + dx_part2 # sum of the branches
+
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
 
   return dx, dgamma, dbeta
+
 
 
 def batchnorm_backward_alt(dout, cache):
@@ -274,7 +334,17 @@ def batchnorm_backward_alt(dout, cache):
   # should be able to compute gradients with respect to the inputs in a       #
   # single statement; our implementation fits on a single 80-character line.  #
   #############################################################################
-  pass
+  N, D = dout.shape
+
+  # unpack cache
+  step1, step2, step3, step4, step5, step6, step7, step8, gamma, beta, x, bn_param = cache
+
+  eps = bn_param.get('eps', 1e-5)
+  dbeta = np.sum(dout, axis=0)
+  dgamma = np.sum(dout * step7, axis=0) 
+  dx = (1. / N) * gamma * (step4 + eps)**(-1. / 2.) * (N * dout - np.sum(dout, axis=0) - (x - step1) * (step4 + eps)**(-1.0) * np.sum(dout * (x - step1), axis=0))
+
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
