@@ -188,7 +188,7 @@ class FullyConnectedNet(object):
       self.params['b' + str(l+1)] = np.zeros((hidden_dims[l],))
       
       if self.use_dropout:
-        pass # TODO
+        pass # TODO ?
       
       if self.use_batchnorm:
         self.params['gamma' + str(l+1)] = np.ones((1,)) #scale param gamma for l'th layer
@@ -257,6 +257,10 @@ class FullyConnectedNet(object):
     # layer, etc.                                                              #
     ############################################################################
     caches = {}
+
+    if self.use_dropout: # FIXME: maybe I can keep these caches elsewhere?
+      dropout_caches = {}
+    
     prevOut = []
 
     # reminder: {affine - [batch norm] - relu - [dropout]} x (L - 1) - affine - softmax
@@ -283,20 +287,24 @@ class FullyConnectedNet(object):
       else:
         out, cache = affine_relu_forward(inputData, Wcur, bcur)
 
-      caches[l] = cache;
+      if self.use_dropout: # apply dropout and keep the cache
+        out, dropout_cache = dropout_forward(out, self.dropout_param)
+        dropout_caches[l-1] = dropout_cache
+        # print 'FW dropout_cache[l-1] = dropout_cache[', l-1, ']'
+        # _, masksilbeni = dropout_cache
+        # print '     size of mask: ', masksilbeni.shape
+        # print '     size of x: ', out.shape
+
+      caches[l] = cache; # FIXME: is the first one (l=0) empty??
 
       prevOut = out
-      # print 'Result (prevOut): ', prevOut.shape
+      
 
-    # print 'Layer (should be final): ', self.num_layers
-    # print 'InputData (prevOut): ', prevOut.shape
-    Wcur = self.params['W' + str(self.num_layers)]
-    # print 'W' + str(self.num_layers) + ' : ', Wcur.shape
-    bcur = self.params['b' + str(self.num_layers)]
-    # print 'b' + str(self.num_layers) + ' : ', bcur.shape
+    # Final Layer
+    Wcur = self.params['W' + str(self.num_layers)]    
+    bcur = self.params['b' + str(self.num_layers)]    
 
-    out, cache = affine_forward(prevOut, Wcur, bcur)  # affine final  
-    # print 'Result (just before final softmax): ', outA.shape
+    out, cache = affine_forward(prevOut, Wcur, bcur)  # affine final      
     caches[self.num_layers] = cache   
     scores = out
     
@@ -341,12 +349,21 @@ class FullyConnectedNet(object):
       # print 'Bward: ', l+1
       cache = caches[l]
 
+      if self.use_dropout:
+        # print 'BW dropout_cache[l-1] = dropout_cache[', l-1, ']'
+        # _, masksilbeni = dropout_caches[l-1]
+        # print '     size of mask: ', masksilbeni.shape
+        # print '     size of dx: ', dout.shape
+        dout = dropout_backward(dout, dropout_caches[l-1])
+
       if self.use_batchnorm:
         dx, dw, db, dgamma, dbeta = affine_batchnorm_relu_backward(dout, cache)
         grads['gamma' + str(l)] = np.sum(dgamma, axis=0)
         grads['beta' + str(l)] = np.sum(dbeta, axis=0)
       else:   
         dx, dw, db = affine_relu_backward(dout, cache)
+
+      #print 'size of dx in l=', l, ' is ', dx.shape      
 
       dout = dx
       grads['W' + str(l)] = dw + self.reg * self.params['W' + str(l)]
