@@ -463,7 +463,48 @@ def conv_forward_naive(x, w, b, conv_param):
   # TODO: Implement the convolutional forward pass.                           #
   # Hint: you can use the function np.pad for padding.                        #
   #############################################################################
-  pass
+  N, C, H, W = x.shape # 2, 3, 4, 4
+  F, C, HH, WW = w.shape # 3, 3, 4, 4
+  stride = conv_param.get('stride', 1) # 2
+  pad = conv_param.get('pad') # 1
+
+  # pad the input array
+  x_padded = np.lib.pad(x, ((0,),(0,),(pad,),(pad,)), 'constant') # default constant padding value is 0
+  print 'x_padded: ', x_padded.shape # (2, 3, 6, 6)
+ 
+  # calculate output size
+  Hout = 1 + (H + 2*pad - HH) / stride  # 2
+  Wout = 1 + (W + 2*pad - WW) / stride  # 2
+
+  # check if it's an integer
+  try:
+    int(Hout)
+    int(Wout)   
+  except ValueError:
+    if not Hout.is_integer() or not Wout.is_integer():
+      print 'Output sizes should be integers: ', Hout, Wout
+      raise ValueError
+    
+  
+
+  # initialize out array
+  out = np.zeros((N, F, Hout, Wout))
+
+  for i in xrange(0, Wout): 
+    for j in xrange(0, Hout): # for each i,j coordinate of the output:                
+
+        for n in xrange(0, N): # for each sample
+          
+          # cut out the x_padded for multiplication          
+          input_data = x_padded[n, :, i*stride:i*stride+WW, j*stride:j*stride+HH] # volume of (3, WW, HH)
+          # print 'cutout: ', n, ': (', i*stride, j*stride, ')------>(', i*stride+WW, j*stride+HH, ') x', C 
+
+          for f in xrange(0, F):  # for each filter:                  
+            # filter (kernel)
+            kernel = w[f,] # volume of (3,WW, HH)             
+            out[n, f, i, j] = np.sum(np.multiply(input_data, kernel)) + b[f]            
+
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
