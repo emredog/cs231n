@@ -587,9 +587,29 @@ def max_pool_forward_naive(x, pool_param):
   """
   out = None
   #############################################################################
-  # TODO: Implement the max pooling forward pass                              #
+  # Implement the max pooling forward pass                              #
   #############################################################################
-  pass
+  # fetch parameters
+  pool_width = pool_param['pool_width']
+  pool_height = pool_param['pool_height']
+  stride = pool_param['stride']
+
+  # get size of x
+  (N, C, H, W) = x.shape
+
+  # calculate output size
+  Wout = (W-pool_width)/stride +1
+  Hout = (H-pool_height)/stride +1
+  out = np.zeros((N, C, Wout, Hout))
+
+  # it's very similar to convolution
+  for i in xrange(0, Wout):
+    for j in xrange(0, Hout): # iterate over output coordinates
+      for n in xrange(0, N): # for each sample
+        for c in xrange(0, C): # for each channel
+          out[n, c, i, j] = np.max(x[n, c, i*stride:i*stride+pool_width, j*stride:j*stride+pool_height])
+
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
