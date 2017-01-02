@@ -460,7 +460,7 @@ def conv_forward_naive(x, w, b, conv_param):
   """
   out = None
   #############################################################################
-  # TODO: Implement the convolutional forward pass.                           #
+  # Implement the convolutional forward pass.                                 #
   # Hint: you can use the function np.pad for padding.                        #
   #############################################################################
   N, C, H, W = x.shape # 2, 3, 4, 4
@@ -470,7 +470,7 @@ def conv_forward_naive(x, w, b, conv_param):
 
   # pad the input array
   x_padded = np.lib.pad(x, ((0,),(0,),(pad,),(pad,)), 'constant') # default constant padding value is 0
-  print 'x_padded: ', x_padded.shape # (2, 3, 6, 6)
+  # print 'x_padded: ', x_padded.shape # (2, 3, 6, 6)
  
   # calculate output size
   Hout = 1 + (H + 2*pad - HH) / stride  # 2
@@ -527,9 +527,43 @@ def conv_backward_naive(dout, cache):
   """
   dx, dw, db = None, None, None
   #############################################################################
-  # TODO: Implement the convolutional backward pass.                          #
+  # Implement the convolutional backward pass.                          #
   #############################################################################
-  pass
+  # unpack cache and fetch dimensions
+  x, w, b, conv_param = cache
+  stride = conv_param.get('stride', 1)
+  pad = conv_param.get('pad')  
+  N, C, H, W = x.shape
+  F, C, HH, WW = w.shape
+  _, _, Hout, Wout = dout.shape
+
+  # fix the size of the outputs
+  dx = np.zeros(x.shape)
+  dw = np.zeros(w.shape)
+  db = np.zeros(b.shape)
+
+  # pad the input and its gradient (will unpad it later)
+  x_padded = np.lib.pad(x, ((0,),(0,),(pad,),(pad,)), 'constant') 
+  dx_padded = np.lib.pad(dx, ((0,),(0,),(pad,),(pad,)), 'constant')
+
+  # do the convolution again
+  for i in xrange(0, Wout):
+    for j in xrange(0, Hout): # for each coordinate of dout
+      
+      for n in xrange(0, N): # for each sample
+        # cut out the x_padded for multiplication          
+        input_data = x_padded[n, :, i*stride:i*stride+WW, j*stride:j*stride+HH] # volume of (3, WW, HH)
+    
+        for f in xrange(0, F): # for each filter       
+          # compute the gradients:
+          db[f] += dout[n, f, i, j] # it's accumulation of 1*upstream, since the biases are shared
+          dw[f] += input_data * dout[n,f,i,j] # it's x*upstream (x being the relative part of the image, that we convolved earlier)
+          dx_padded[n, :, i*stride:i*stride+WW, j*stride:j*stride+HH] += w[f,] * dout[n, f, i, j]
+
+
+  # do the unpad 
+  dx = dx_padded[:, :, pad:pad+H, pad:pad+W]
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
