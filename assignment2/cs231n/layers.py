@@ -630,9 +630,34 @@ def max_pool_backward_naive(dout, cache):
   """
   dx = None
   #############################################################################
-  # TODO: Implement the max pooling backward pass                             #
+  # Implement the max pooling backward pass                             #
   #############################################################################
-  pass
+  # unpack cache
+  x, pool_param = cache
+
+  # fetch parameters
+  pool_width = pool_param['pool_width']
+  pool_height = pool_param['pool_height']
+  stride = pool_param['stride']
+
+  # get original size and initialize output variable
+  (N, C, H, W) = x.shape
+  dx = np.zeros(x.shape)
+
+  # get the size of output (it's same as dout)
+  _, _, Hout, Wout = dout.shape
+
+  # it's very similar to convolution
+  for i in xrange(0, Wout):
+    for j in xrange(0, Hout): # iterate over output coordinates
+      for n in xrange(0, N): # for each sample
+        for c in xrange(0, C): # for each channel
+          #fetch the relevant part of x that we used for pooling 
+          original_input = x[n, c, i*stride:i*stride+pool_width, j*stride:j*stride+pool_height]
+          # fetch the argmax
+          idx = np.unravel_index(np.argmax(original_input), original_input.shape)          
+          dx[n, c, i*stride+idx[0], j*stride+idx[1]] = dout[n, c, i, j]
+                      
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
